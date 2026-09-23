@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes calories — guide d'utilisation</title>
+<style>
+  :root { --vert:#12855f; --vert-clair:#e6f4ee; --encre:#14201b; --texte:#2b3a34; --gris:#6b7a74; --bord:#dfe6e2; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--texte); background:#f6f8f7; line-height:1.55; }
+  header { background:var(--vert); color:#fff; padding:26px 20px; }
+  header h1 { margin:0; font-size:1.5rem; color:#fff; }
+  header p { margin:6px 0 0; opacity:.92; font-size:.95rem; }
+  main { max-width:860px; margin:0 auto; padding:22px 20px 60px; }
+  section { background:#fff; border:1px solid var(--bord); border-radius:14px; padding:20px; margin-bottom:18px; }
+  h2 { color:var(--encre); font-size:1.15rem; margin:0 0 10px; }
+  h3 { color:var(--encre); font-size:1rem; margin:18px 0 6px; }
+  p, li { font-size:.97rem; }
+  code { background:var(--vert-clair); color:var(--vert); padding:2px 6px; border-radius:5px; font-size:.9em; }
+  figure { margin:14px 0; text-align:center; }
+  figure img { width:100%; max-width:330px; border:1px solid var(--bord); border-radius:16px; }
+  figcaption { font-size:.83rem; color:var(--gris); margin-top:6px; }
+  .astuce { background:var(--vert-clair); border-radius:10px; padding:12px 14px; font-size:.92rem; }
+  .attention { background:#fdeceb; color:#8f2b1e; border-radius:10px; padding:12px 14px; font-size:.92rem; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--bord); vertical-align:top; }
+  th { color:var(--encre); }
+  ol, ul { padding-left:22px; }
+  footer { text-align:center; color:var(--gris); font-size:.82rem; padding:0 20px 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🍽️ Mes calories — guide d'utilisation</h1>
+  <p>Compteur de calories simple, 100 % local (aucun compte, aucune donnée envoyée).</p>
+</header>
+
+<main>
+
+<section>
+  <h2>1. Ouvrir l'appli</h2>
+  <p>Dans le dossier <code>compteur-calories</code> :</p>
+  <ul>
+    <li><b>Double-clic sur <code>lancer.command</code></b> → le navigateur s'ouvre sur l'appli.
+      (Si macOS demande une confirmation, autorise l'ouverture.)</li>
+    <li>Ou bien : double-clic sur <code>app/index.html</code>.</li>
+  </ul>
+  <div class="astuce">Sur l'iPhone, il faut une adresse web (localhost ne fonctionne pas à distance).
+    Demande-moi de la publier (GitHub Pages ou tunnel) pour t'en servir depuis le téléphone.</div>
+</section>
+
+<section>
+  <h2>2. Écran « Aujourd'hui »</h2>
+  <figure>
+    <img src="captures/01-aujourdhui.png" alt="Écran Aujourd'hui : anneau de progression et repas">
+    <figcaption>L'anneau montre le reste à consommer ; le total consommé et l'objectif sont écrits dessous.</figcaption>
+  </figure>
+  <ul>
+    <li><b>Le grand chiffre</b> = kcal qu'il te reste pour la journée. S'il devient rouge, tu as dépassé.</li>
+    <li><b>← Hier / Suivant →</b> : naviguer d'un jour à l'autre (pratique pour rattraper un repas oublié).</li>
+    <li><b>4 repas</b> : petit-déjeuner, déjeuner, collation, dîner — chacun avec son sous-total.</li>
+    <li><b>✕</b> à droite d'une ligne : supprime la ligne (utile en cas de faute de saisie).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>3. Ajouter un aliment</h2>
+  <p>Bouton <b>+ Ajouter</b> dans le repas concerné → une feuille s'ouvre par le bas.</p>
+  <figure>
+    <img src="captures/04-ajout-liste.png" alt="Feuille d'ajout : recherche dans la base d'aliments">
+    <figcaption>On tape quelques lettres (« riz », « poulet », « attieke ») ; les accents et les majuscules n'ont pas d'importance.</figcaption>
+  </figure>
+  <figure>
+    <img src="captures/05-quantite.png" alt="Choix de la quantité avec calcul en direct">
+    <figcaption>On choisit une portion type (bol moyen, assiette…) ou on tape un poids : les kcal se calculent en direct.</figcaption>
+  </figure>
+  <ol>
+    <li>Chercher l'aliment, le toucher.</li>
+    <li>Choisir la quantité (ou taper les grammes).</li>
+    <li><b>Ajouter au déjeuner</b> (le nom du repas s'adapte).</li>
+  </ol>
+  <p><b>Aliment absent de la liste ?</b> Lien <b>« Saisie libre »</b> : nom + kcal pour 100 g + quantité.
+    Coche <b>« Garder cet aliment dans mes favoris »</b> : il sera proposé la prochaine fois.</p>
+  <div class="astuce">Les chips en haut de la feuille (Petit-déj / Déjeuner / Collation / Dîner) permettent de
+    changer de repas sans fermer la feuille.</div>
+</section>
+
+<section>
+  <h2>4. Écran « Semaine »</h2>
+  <figure>
+    <img src="captures/02-semaine.png" alt="Écran Semaine : 7 barres et moyenne">
+    <figcaption>Une barre par jour sur 7 jours ; le tiret « — » signifie « aucun repas enregistré ».</figcaption>
+  </figure>
+  <ul>
+    <li>Barre <b>verte</b> = sous l'objectif, <b>rouge</b> = dépassement.</li>
+    <li><b>Moyenne</b> = moyenne des jours réellement notés (les jours vides ne comptent pas).</li>
+    <li><b>Écart moyen</b> négatif = tu es en dessous de ton objectif. Repère : ≈ 7 700 kcal = 1 kg.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. Écran « Profil »</h2>
+  <figure>
+    <img src="captures/03-profil.png" alt="Écran Profil : calcul de l'objectif">
+    <figcaption>Renseigne sexe, âge, taille, poids, activité et but → l'objectif se calcule automatiquement (Mifflin-St Jeor).</figcaption>
+  </figure>
+  <ul>
+    <li><b>Objectif manuel</b> : si tu as un objectif donné par un médecin ou un diététicien, saisis-le ici — il remplace le calcul.</li>
+    <li><b>Exporter (JSON)</b> : enregistre une sauvegarde de tes données (fichier à garder).</li>
+    <li><b>Importer</b> : restaure une sauvegarde.</li>
+    <li><b>Tout effacer</b> : remet l'appli à zéro (définitif).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>6. Questions fréquentes</h2>
+  <table>
+    <tr><th>Question</th><th>Réponse</th></tr>
+    <tr><td>Mes données partent-elles sur Internet ?</td>
+        <td>Non. Tout reste dans ton navigateur. Aucun compte, aucun serveur, aucun envoi.</td></tr>
+    <tr><td>Je ferme le navigateur, est-ce que je perds tout ?</td>
+        <td>Non, les repas sont conservés sur l'appareil. Mais si tu vides les données du navigateur, elles disparaissent → exporte le JSON de temps en temps.</td></tr>
+    <tr><td>Les valeurs sont-elles exactes ?</td>
+        <td>Non, elles sont <b>indicatives</b>. La cuisson, l'huile et la taille réelle de la portion changent beaucoup le résultat. Les plats composés locaux (marqués ≈) sont des estimations grossières : ajuste-les avec tes propres repas.</td></tr>
+    <tr><td>Pourquoi « Objectif 2 000 kcal » au premier lancement ?</td>
+        <td>Valeur passe-partout tant que le profil n'est pas rempli. Renseigne ton profil pour un objectif calculé pour toi.</td></tr>
+    <tr><td>Est-ce un outil médical ?</td>
+        <td>Non. Pour un suivi (diabète, grossesse, sport de haut niveau), demande un avis médical ou diététique.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>7. Ce que l'appli ne fait pas (encore)</h2>
+  <ul>
+    <li>Pas de protéines / glucides / lipides (uniquement les calories).</li>
+    <li>Pas de scan de code-barres ni de photo.</li>
+    <li>Pas de synchronisation entre appareils ni de compte partagé.</li>
+    <li>L'objectif est le même pour tous les jours (pas d'historique des changements d'objectif).</li>
+  </ul>
+  <div class="attention">Dis-moi ce qui te manque à l'usage : ces manques sont la liste des prochaines
+    versions (et c'est ce qui décidera si l'idée mérite d'aller plus loin).</div>
+</section>
+
+</main>
+
+<footer>
+  Mes calories — appli locale, fichiers HTML/CSS/JS sans dépendance.
+  Vérifications : 71 tests de logique (<code>node test-logic.js</code>) + parcours navigateur complet.
+</footer>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12855f">
+<title>Mes calories</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete-titre">
+    <span class="logo">🍽️</span>
+    <div>
+      <h1>Mes calories</h1>
+      <p id="entete-date" class="entete-date">—</p>
+    </div>
+  </div>
+  <button type="button" class="bouton-jour" id="bouton-aujourdhui" hidden>Revenir à aujourd'hui</button>
+</header>
+
+<main id="vue"></main>
+
+<nav class="onglets" id="onglets">
+  <button type="button" data-ecran="jour" class="onglet actif">Aujourd'hui</button>
+  <button type="button" data-ecran="semaine" class="onglet">Semaine</button>
+  <button type="button" data-ecran="profil" class="onglet">Profil</button>
+</nav>
+
+<!-- Feuille d'ajout -->
+<div class="voile" id="voile" hidden></div>
+<section class="feuille" id="feuille" hidden aria-modal="true" role="dialog">
+  <div class="feuille-entete">
+    <strong id="feuille-titre">Ajouter un aliment</strong>
+    <button type="button" class="fermer" id="fermer-feuille" aria-label="Fermer">✕</button>
+  </div>
+  <div class="feuille-corps" id="feuille-corps"></div>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="logique.js"></script>
+<script src="base-aliments.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
