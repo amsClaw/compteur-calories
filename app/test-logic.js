@@ -1,13 +1,17 @@
-/* test-logic.js — tests de la logique pure : `node test-logic.js` */
+/* test-logic.js — tests de la logique pure : `npm test` (ou `node app/test-logic.js`)
+   Sortie TAP 13 (machine) + résumé lisible (humain), pour être lisible par l'échelle qualité
+   comme par un humain. Les 71 assertions ci-dessous sont inchangées. */
 var L = require('./logique.js');
 var B = require('./base-aliments.js');
 
 var reussis = 0;
 var echecs = [];
+var resultats = []; /* un point de test TAP par assertion, dans l'ordre d'écriture */
 
 function test(nom, condition, detail) {
-  if (condition) { reussis++; return; }
+  if (condition) { reussis++; resultats.push({ nom: nom, ok: true }); return; }
   echecs.push(nom + (detail ? '  → ' + detail : ''));
+  resultats.push({ nom: nom, ok: false, detail: detail });
 }
 function egal(nom, obtenu, attendu) {
   test(nom, obtenu === attendu, 'obtenu ' + JSON.stringify(obtenu) + ', attendu ' + JSON.stringify(attendu));
@@ -117,6 +121,17 @@ egal('Repas selon heure 21h', L.repasSelonHeure(21), 'diner');
 
 /* ---------- Résultat ---------- */
 var total = reussis + echecs.length;
+
+/* Sortie TAP 13 : un point de test par assertion, plan 1..N — lisible par un outil. */
+console.log('TAP version 13');
+resultats.forEach(function (r, i) {
+  console.log((r.ok ? 'ok ' : 'not ok ') + (i + 1) + ' - ' + r.nom + (r.ok || !r.detail ? '' : '  → ' + r.detail));
+});
+console.log('1..' + total);
+console.log('# tests ' + total);
+console.log('# pass ' + reussis);
+console.log('# fail ' + echecs.length);
+
 if (echecs.length) {
   console.log('\n✗ ' + echecs.length + '/' + total + ' tests en échec :\n');
   echecs.forEach(function (e) { console.log('  - ' + e); });

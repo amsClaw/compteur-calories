@@ -1,0 +1,10 @@
+{
+  "name": "compteur-calories",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compteur de calories local (appli HTML/JS zéro dépendance)",
+  "license": "MIT",
+  "scripts": {
+    "test": "node app/test-logic.js"
+  }
+}
