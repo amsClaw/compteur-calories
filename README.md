@@ -4,6 +4,10 @@ Appli web **locale**, zéro dépendance, zéro installation : un seul dossier, d
 HTML/CSS/JS purs. Aucun compte, aucun serveur, aucune donnée envoyée — tout vit dans le
 navigateur (`localStorage`).
 
+Version publiée (testable depuis un téléphone) :
+https://amsclaw.github.io/compteur-calories/app/index.html
+Guide en ligne : https://amsclaw.github.io/compteur-calories/docs/GUIDE_UTILISATEUR.html
+
 ## Lancer l'appli
 
 - **Le plus simple** : double-clic sur `lancer.command` (ouvre un petit serveur local et
@@ -16,8 +20,8 @@ navigateur (`localStorage`).
 - Objectif calorique personnalisé (formule de Mifflin-St Jeor : sexe, âge, taille, poids,
   activité, but perdre/maintenir/prendre) — ou objectif manuel.
 - Journal par repas (petit-déj, déjeuner, collation, dîner), navigation jour par jour.
-- Base locale d'environ 85 aliments (kcal / 100 g + portion type), avec une trentaine de
-  plats d'Afrique de l'Ouest (riz gras, attiéké, foutou, sauce arachide, poisson braisé…).
+- Base locale de 87 aliments (kcal / 100 g + portion type), avec une trentaine de plats
+  d'Afrique de l'Ouest (riz gras, attiéké, foutou, sauce arachide, poisson braisé…).
 - Saisie libre pour les aliments absents, avec mémorisation dans « Mes aliments ».
 - Anneau de progression, reste à consommer, dépassement signalé en rouge.
 - Vue « 7 derniers jours » : barres, moyenne, écart moyen vs objectif.
