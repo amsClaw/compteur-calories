@@ -88,6 +88,31 @@
     return { ok: e.length === 0, erreurs: e };
   }
 
+  /* Décide quoi enregistrer depuis l'écran Profil.
+     - âge, taille et poids tous vides + objectif manuel valide → on n'enregistre que l'objectif
+       manuel (manuelSeul: true, le profil existant reste inchangé) ;
+     - sinon, validation complète du profil, puis de l'objectif manuel (comportement d'origine).
+     « Vide » se juge sur les saisies brutes (bruts = { age, taille, poids } en texte) : une saisie
+     non numérique (« abc ») n'est PAS un champ vide et déclenche la validation du profil. */
+  function deciderEnregistrementProfil(p, manuelBrut, bruts) {
+    var brut = String(manuelBrut == null ? '' : manuelBrut).trim();
+    var manuel = valeurNumerique(brut);
+    var manuelValide = brut !== '' && !isNaN(manuel) && manuel >= 800 && manuel <= 6000;
+    var erreurManuel = 'Objectif manuel : un nombre entre 800 et 6000 kcal (ou vide).';
+    function vide(v) { return v == null || String(v).trim() === ''; }
+    var profilVide = bruts
+      ? vide(bruts.age) && vide(bruts.taille) && vide(bruts.poids)
+      : !p || (vide(p.age) && vide(p.tailleCm) && vide(p.poidsKg));
+    if (profilVide && brut !== '') {
+      if (!manuelValide) return { ok: false, erreurs: [erreurManuel] };
+      return { ok: true, erreurs: [], manuelSeul: true, objectifManuel: Math.round(manuel) };
+    }
+    var v = validerProfil(p);
+    if (!v.ok) return { ok: false, erreurs: v.erreurs };
+    if (brut !== '' && !manuelValide) return { ok: false, erreurs: [erreurManuel] };
+    return { ok: true, erreurs: [], manuelSeul: false, profil: p, objectifManuel: brut === '' ? null : Math.round(manuel) };
+  }
+
   /* ---------- Aliments & portions ---------- */
 
   function kcalPortion(kcal100g, grammes) {
@@ -271,6 +296,7 @@
     calculerIMC: calculerIMC,
     categorieIMC: categorieIMC,
     validerProfil: validerProfil,
+    deciderEnregistrementProfil: deciderEnregistrementProfil,
     kcalPortion: kcalPortion,
     normaliser: normaliser,
     rechercherAliments: rechercherAliments,

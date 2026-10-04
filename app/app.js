@@ -303,6 +303,8 @@
       html += '<div class="ligne-calc fort"><span>Objectif conseillé</span><b>' + n(obj) + ' kcal</b></div>';
       html += '<div class="ligne-calc"><span>IMC</span><b>' + String(imc).replace('.', ',') + ' — ' + L.categorieIMC(imc) + '</b></div>';
       if (manuel) html += '<p class="note" style="margin-top:8px">Objectif manuel actif : <b>' + n(manuel) + ' kcal</b> (remplace le calcul).</p>';
+    } else if (manuel) {
+      html += '<p class="note">Objectif manuel actif : <b>' + n(manuel) + ' kcal</b>.</p>';
     } else {
       html += '<p class="note">Renseigne âge, taille et poids pour voir ton objectif calculé.</p>';
     }
@@ -435,19 +437,17 @@
 
   function enregistrerProfil() {
     var p = lireProfilFormulaire();
-    var manuelBrut = document.getElementById('inp-manuel').value;
-    var manuel = L.valeurNumerique(manuelBrut);
-    var v = L.validerProfil(p);
-    if (!v.ok) { afficherErreurs(v.erreurs); return; }
-    if (manuelBrut.trim() !== '' && (isNaN(manuel) || manuel < 800 || manuel > 6000)) {
-      afficherErreurs(['Objectif manuel : un nombre entre 800 et 6000 kcal (ou vide).']);
-      return;
-    }
-    etat.profil = p;
-    etat.objectifManuel = manuelBrut.trim() === '' ? null : Math.round(manuel);
+    var d = L.deciderEnregistrementProfil(p, document.getElementById('inp-manuel').value, {
+      age: document.getElementById('inp-age').value,
+      taille: document.getElementById('inp-taille').value,
+      poids: document.getElementById('inp-poids').value
+    });
+    if (!d.ok) { afficherErreurs(d.erreurs); return; }
+    if (!d.manuelSeul) etat.profil = d.profil;
+    etat.objectifManuel = d.objectifManuel;
     sauvegarder();
     rendre();
-    toast('Profil enregistré ✓ Objectif : ' + L.formaterNombre(objectifDuJour()) + ' kcal');
+    toast((d.manuelSeul ? 'Objectif manuel enregistré ✓' : 'Profil enregistré ✓') + ' Objectif : ' + L.formaterNombre(objectifDuJour()) + ' kcal');
   }
 
   function exporter() {
@@ -580,7 +580,7 @@
       if (live2) live2.innerHTML = L.formaterNombre(L.kcalPortion(k, g)) + ' kcal<small>total estimé</small>';
       return;
     }
-    if (id === 'inp-age' || id === 'inp-taille' || id === 'inp-poids') { majApercu(); return; }
+    if (id === 'inp-age' || id === 'inp-taille' || id === 'inp-poids' || id === 'inp-manuel') { majApercu(); return; }
   }, true);
 
   document.addEventListener('change', function (ev) {
