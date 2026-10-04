@@ -39,12 +39,19 @@ function demarrer() {
   var stockage = { 'mes-calories-v1': JSON.stringify({
     entrees: [{ id: 'veille', date: '2026-10-03', repas: 'diner', nom: 'Riz', grammes: 100, kcal: 130 }]
   }) };
+  var confirmations = [];
+  var confirmer = false;
+  var ecritures = 0;
   var window = Object.assign(cibleEvenements(), { scrollTo: function () {} });
+  window.confirm = function (message) { confirmations.push(message); return confirmer; };
   var contexte = vm.createContext({
     window: window, document: document, Date: DateSimulee,
     localStorage: {
       getItem: function (cle) { return stockage[cle] || null; },
-      setItem: function (cle, valeur) { stockage[cle] = valeur; },
+      setItem: function (cle, valeur) {
+        stockage[cle] = valeur;
+        if (cle === 'mes-calories-v1') ecritures++;
+      },
       removeItem: function (cle) { delete stockage[cle]; }
     },
     setTimeout: function () {}, clearTimeout: function () {}
@@ -57,14 +64,19 @@ function demarrer() {
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), contexte);
   return {
     app: window.App, element: element,
+    confirmations: confirmations,
+    confirmer: function (valeur) { confirmer = valeur; },
+    ecritures: function () { return ecritures; },
     date: function (jour, heure) { maintenant = new Date(2026, 9, jour, heure || 8).getTime(); },
     retour: function (type, visible) {
       document.visibilityState = visible === false ? 'hidden' : 'visible';
       (type === 'focus' ? window : document).emettre(type, {});
     },
-    clic: function (act) {
+    clic: function (act, id) {
       var cible = {
-        getAttribute: function (nom) { return nom === 'data-act' ? act : null; },
+        getAttribute: function (nom) {
+          return nom === 'data-act' ? act : nom === 'data-id' ? id : null;
+        },
         closest: function (selecteur) { return selecteur === '[data-act]' ? cible : null; }
       };
       document.emettre('click', { target: cible });
@@ -128,4 +140,30 @@ module.exports = function (test, egal) {
   ui.element('feuille-corps').innerHTML = 'nouvelle saisie';
   ui.retour('focus');
   egal('Focus après visibilité : ne rend pas une deuxième fois', ui.element('feuille-corps').innerHTML, 'nouvelle saisie');
+
+  var suppression = demarrer();
+  var vueAvant = suppression.element('vue').innerHTML;
+  var donneesAvant = JSON.stringify(suppression.sauvegarde());
+  suppression.clic('suppr', 'veille');
+  egal('Suppression : confirmation avec nom et kcal', suppression.confirmations[0], 'Supprimer « Riz » (130 kcal) ?');
+  egal('Annuler : entrée en mémoire conservée', suppression.app.etat.entrees.length, 1);
+  egal('Annuler : ligne affichée conservée', suppression.element('vue').innerHTML, vueAvant);
+  egal('Annuler : stockage inchangé', JSON.stringify(suppression.sauvegarde()), donneesAvant);
+  egal('Annuler : aucune sauvegarde', suppression.ecritures(), 0);
+  test('Annuler : aucun toast de suppression', suppression.element('toast').hidden);
+
+  suppression.app.etat.entrees.push({ id: 'autre', date: '2026-10-02', repas: 'diner', nom: 'Pain', grammes: 60, kcal: 162 });
+  suppression.confirmer(true);
+  suppression.clic('suppr', 'veille');
+  egal('OK : seule l\'entrée ciblée est supprimée', suppression.app.etat.entrees.length, 1);
+  egal('OK : autre entrée conservée', suppression.sauvegarde().entrees[0].id, 'autre');
+  egal('OK : une sauvegarde', suppression.ecritures(), 1);
+  test('OK : ligne retirée de la vue', !suppression.element('vue').innerHTML.includes('data-id="veille"'));
+  egal('OK : total recalculé', suppression.element('entete-date').textContent, "Aujourd'hui · 0 kcal");
+  egal('OK : message Supprimé', suppression.element('toast').textContent, 'Supprimé');
+  test('OK : toast visible', !suppression.element('toast').hidden);
+
+  suppression.clic('suppr', 'absent');
+  egal('Identifiant absent : aucune confirmation', suppression.confirmations.length, 2);
+  egal('Identifiant absent : aucune sauvegarde supplémentaire', suppression.ecritures(), 1);
 };

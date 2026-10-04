@@ -93,6 +93,7 @@ main { padding: 14px; max-width: 640px; margin: 0 auto; }
 .suppr {
   border: none; background: none; color: var(--gris); font-size: 1.05rem;
   padding: 6px 4px; cursor: pointer; line-height: 1;
+  min-width: 44px; min-height: 44px; flex-shrink: 0;
 }
 
 /* ---------- Boutons ---------- */

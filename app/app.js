@@ -498,7 +498,10 @@
 
     if (act === 'ajout') { ouvrirFeuille(cible.getAttribute('data-repas')); return; }
     if (act === 'suppr') {
-      etat.entrees = L.supprimerEntree(etat.entrees, cible.getAttribute('data-id'));
+      var id = cible.getAttribute('data-id');
+      var entree = etat.entrees.find(function (e) { return e.id === id; });
+      if (!entree || !window.confirm('Supprimer « ' + entree.nom + ' » (' + n(entree.kcal) + ' kcal) ?')) return;
+      etat.entrees = L.supprimerEntree(etat.entrees, id);
       sauvegarder(); rendre(); toast('Supprimé');
       return;
     }
