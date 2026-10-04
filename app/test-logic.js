@@ -119,6 +119,9 @@ egal('Repas selon heure 13h', L.repasSelonHeure(13), 'dejeuner');
 egal('Repas selon heure 16h', L.repasSelonHeure(16), 'collation');
 egal('Repas selon heure 21h', L.repasSelonHeure(21), 'diner');
 
+/* ---------- Régressions d'interface ---------- */
+require('./test-app.js')(test, egal);
+
 /* ---------- Résultat ---------- */
 var total = reussis + echecs.length;
 

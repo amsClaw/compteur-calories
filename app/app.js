@@ -12,6 +12,7 @@
   var etat = charger();
   var ecran = 'jour';
   var jourAffiche = L.jourISO(new Date());
+  var aujourdhuiDernierRendu = jourAffiche;
 
   var feuille = { ouvert: false, mode: 'liste', repas: 'dejeuner', requete: '', aliment: null, grammes: null };
 
@@ -244,6 +245,7 @@
   /* ---------- Rendu ---------- */
   function rendre() {
     var aujourdhui = L.jourISO(new Date());
+    aujourdhuiDernierRendu = aujourdhui;
     el.date.textContent = L.libelleJour(jourAffiche, aujourdhui) + ' · ' + L.formaterNombre(L.totalJour(etat.entrees, jourAffiche)) + ' kcal';
     el.boutonJour.hidden = (jourAffiche === aujourdhui);
 
@@ -258,6 +260,20 @@
     if (ecran === 'profil') majApercu();
     rendreFeuille();
   }
+
+  function actualiserJourAuRetour() {
+    var aujourdhui = L.jourISO(new Date());
+    // Suivre aujourd'hui, sans quitter un jour passé choisi volontairement.
+    if (aujourdhui !== aujourdhuiDernierRendu && jourAffiche === aujourdhuiDernierRendu) {
+      jourAffiche = aujourdhui;
+      rendre();
+    }
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') actualiserJourAuRetour();
+  });
+  window.addEventListener('focus', actualiserJourAuRetour);
 
   /* ---------- Aperçu du calcul sur l'écran Profil ---------- */
   function lireProfilFormulaire() {
