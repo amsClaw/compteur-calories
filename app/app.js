@@ -421,7 +421,11 @@
 
   function enregistrerProfil() {
     var p = lireProfilFormulaire();
-    var d = L.deciderEnregistrementProfil(p, document.getElementById('inp-manuel').value);
+    var d = L.deciderEnregistrementProfil(p, document.getElementById('inp-manuel').value, {
+      age: document.getElementById('inp-age').value,
+      taille: document.getElementById('inp-taille').value,
+      poids: document.getElementById('inp-poids').value
+    });
     if (!d.ok) { afficherErreurs(d.erreurs); return; }
     if (!d.manuelSeul) etat.profil = d.profil;
     etat.objectifManuel = d.objectifManuel;

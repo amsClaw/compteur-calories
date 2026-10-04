@@ -43,21 +43,32 @@ test('Poids en texte refusé', !L.validerProfil({ sexe: 'h', age: 35, tailleCm: 
 
 /* ---------- Enregistrement profil / objectif manuel seul ---------- */
 var profilVideForm = { sexe: 'h', age: NaN, tailleCm: NaN, poidsKg: NaN, activite: 'modere', objectif: 'perdre' };
-var dManuel = L.deciderEnregistrementProfil(profilVideForm, '1800');
+var brutsVides = { age: '', taille: ' ', poids: '' };
+var dManuel = L.deciderEnregistrementProfil(profilVideForm, '1800', brutsVides);
 test('Profil vide + manuel 1800 → accepté sans profil', dManuel.ok && dManuel.manuelSeul === true && dManuel.objectifManuel === 1800 && dManuel.erreurs.length === 0);
-egal('Manuel « 1 800,4 » arrondi', L.deciderEnregistrementProfil(profilVideForm, '1 800,4').objectifManuel, 1800);
+egal('Manuel « 1 800,4 » arrondi', L.deciderEnregistrementProfil(profilVideForm, '1 800,4', brutsVides).objectifManuel, 1800);
 test('Profil vide + manuel 500 → erreur objectif manuel', (function () {
-  var d = L.deciderEnregistrementProfil(profilVideForm, '500');
+  var d = L.deciderEnregistrementProfil(profilVideForm, '500', brutsVides);
   return !d.ok && d.erreurs.length === 1 && /Objectif manuel/.test(d.erreurs[0]);
 })());
 test('Profil vide + manuel vide → erreurs de profil', (function () {
-  var d = L.deciderEnregistrementProfil(profilVideForm, '');
+  var d = L.deciderEnregistrementProfil(profilVideForm, '', brutsVides);
   return !d.ok && d.erreurs.some(function (e) { return /Âge/.test(e); });
 })());
 test('Âge seul + manuel 1800 → erreurs de profil maintenues', (function () {
-  var d = L.deciderEnregistrementProfil({ sexe: 'h', age: 35, tailleCm: NaN, poidsKg: NaN, activite: 'modere', objectif: 'perdre' }, '1800');
+  var d = L.deciderEnregistrementProfil({ sexe: 'h', age: 35, tailleCm: NaN, poidsKg: NaN, activite: 'modere', objectif: 'perdre' }, '1800', { age: '35', taille: '', poids: '' });
   return !d.ok && d.erreurs.some(function (e) { return /Taille/.test(e); }) && d.erreurs.some(function (e) { return /Poids/.test(e); });
 })());
+[['age', 'abc'], ['taille', 'abc'], ['poids', '?']].forEach(function (c) {
+  test('Saisie non numérique en ' + c[0] + ' + manuel 1900 → erreurs de profil, rien d\'enregistré', (function () {
+    var bruts = { age: '', taille: '', poids: '' };
+    bruts[c[0]] = c[1];
+    var p = { sexe: 'h', age: L.valeurNumerique(bruts.age), tailleCm: L.valeurNumerique(bruts.taille), poidsKg: L.valeurNumerique(bruts.poids), activite: 'modere', objectif: 'perdre' };
+    var d = L.deciderEnregistrementProfil(p, '1900', bruts);
+    return !d.ok && d.manuelSeul === undefined && d.objectifManuel === undefined && d.erreurs.some(function (e) { return /Âge/.test(e); });
+  })());
+});
+test('Sans saisies brutes, NaN n\'est pas un champ vide', !L.deciderEnregistrementProfil(profilVideForm, '1800').ok);
 test('Profil complet + manuel 1800 → profil et manuel enregistrés', (function () {
   var p = { sexe: 'h', age: 35, tailleCm: 178, poidsKg: 82, activite: 'modere', objectif: 'perdre' };
   var d = L.deciderEnregistrementProfil(p, '1800');
