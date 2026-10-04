@@ -88,6 +88,27 @@
     return { ok: e.length === 0, erreurs: e };
   }
 
+  /* Décide quoi enregistrer depuis l'écran Profil.
+     - âge, taille et poids tous vides + objectif manuel valide → on n'enregistre que l'objectif
+       manuel (manuelSeul: true, le profil existant reste inchangé) ;
+     - sinon, validation complète du profil, puis de l'objectif manuel (comportement d'origine). */
+  function deciderEnregistrementProfil(p, manuelBrut) {
+    var brut = String(manuelBrut == null ? '' : manuelBrut).trim();
+    var manuel = valeurNumerique(brut);
+    var manuelValide = brut !== '' && !isNaN(manuel) && manuel >= 800 && manuel <= 6000;
+    var erreurManuel = 'Objectif manuel : un nombre entre 800 et 6000 kcal (ou vide).';
+    function vide(v) { return v == null || (typeof v === 'number' && isNaN(v)) || v === ''; }
+    var profilVide = !p || (vide(p.age) && vide(p.tailleCm) && vide(p.poidsKg));
+    if (profilVide && brut !== '') {
+      if (!manuelValide) return { ok: false, erreurs: [erreurManuel] };
+      return { ok: true, erreurs: [], manuelSeul: true, objectifManuel: Math.round(manuel) };
+    }
+    var v = validerProfil(p);
+    if (!v.ok) return { ok: false, erreurs: v.erreurs };
+    if (brut !== '' && !manuelValide) return { ok: false, erreurs: [erreurManuel] };
+    return { ok: true, erreurs: [], manuelSeul: false, profil: p, objectifManuel: brut === '' ? null : Math.round(manuel) };
+  }
+
   /* ---------- Aliments & portions ---------- */
 
   function kcalPortion(kcal100g, grammes) {
@@ -271,6 +292,7 @@
     calculerIMC: calculerIMC,
     categorieIMC: categorieIMC,
     validerProfil: validerProfil,
+    deciderEnregistrementProfil: deciderEnregistrementProfil,
     kcalPortion: kcalPortion,
     normaliser: normaliser,
     rechercherAliments: rechercherAliments,
