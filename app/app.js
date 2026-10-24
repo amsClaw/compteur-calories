@@ -39,11 +39,14 @@
     }
   }
 
+  // Renvoie false si l'écriture a échoué : l'appelant ne doit alors pas annoncer de succès.
   function sauvegarder() {
     try {
       localStorage.setItem(CLE, JSON.stringify(etat));
+      return true;
     } catch (e) {
-      toast('Impossible d\'enregistrer (stockage plein ?)');
+      toast('Pas enregistré (stockage plein ?) : exporte tes données.');
+      return false;
     }
   }
 
@@ -418,7 +421,12 @@
     if (memoriser) {
       etat.perso.push({ nom: entree.nom, kcal100g: Number(entree.kcal100g) });
     }
-    sauvegarder();
+    if (!sauvegarder()) {
+      // Écriture refusée : on retire l'entrée (et l'aliment perso) pour que l'affichage ne mente pas.
+      etat.entrees.pop();
+      if (memoriser) etat.perso.pop();
+      return false;
+    }
     fermerFeuille();
     jourAffiche = entree.date;
     ecran = 'jour';
@@ -445,8 +453,9 @@
     if (!d.ok) { afficherErreurs(d.erreurs); return; }
     if (!d.manuelSeul) etat.profil = d.profil;
     etat.objectifManuel = d.objectifManuel;
-    sauvegarder();
+    var enregistre = sauvegarder();
     rendre();
+    if (!enregistre) return;
     toast((d.manuelSeul ? 'Objectif manuel enregistré ✓' : 'Profil enregistré ✓') + ' Objectif : ' + L.formaterNombre(objectifDuJour()) + ' kcal');
   }
 
@@ -476,9 +485,9 @@
         objectifManuel: typeof o.objectifManuel === 'number' ? o.objectifManuel : null,
         cree: o.cree || new Date().toISOString()
       };
-      sauvegarder();
+      var enregistre = sauvegarder();
       rendre();
-      toast(etat.entrees.length + ' repas importés ✓');
+      if (enregistre) toast(etat.entrees.length + ' repas importés ✓');
     } catch (e) {
       toast('Fichier illisible : ce n\'est pas une sauvegarde de l\'app.');
     }
@@ -502,7 +511,8 @@
       var entree = etat.entrees.find(function (e) { return e.id === id; });
       if (!entree || !window.confirm('Supprimer « ' + entree.nom + ' » (' + n(entree.kcal) + ' kcal) ?')) return;
       etat.entrees = L.supprimerEntree(etat.entrees, id);
-      sauvegarder(); rendre(); toast('Supprimé');
+      var enregistre = sauvegarder(); rendre();
+      if (enregistre) toast('Supprimé');
       return;
     }
     if (act === 'jour-prec') { jourAffiche = L.ajouterJours(jourAffiche, -1); rendre(); return; }
@@ -552,9 +562,9 @@
     if (act === 'reset') {
       if (window.confirm('Tout effacer (repas, profil) ? Cette action est définitive — pense à exporter d\'abord.')) {
         etat = etatVide();
-        sauvegarder();
+        var efface = sauvegarder();
         rendre();
-        toast('Données effacées');
+        if (efface) toast('Données effacées');
       }
       return;
     }
