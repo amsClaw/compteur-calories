@@ -81,6 +81,7 @@ function demarrer() {
       };
       document.emettre('click', { target: cible });
     },
+    saisir: function (id) { document.emettre('input', { target: { id: id } }); },
     sauvegarde: function () { return JSON.parse(stockage['mes-calories-v1']); }
   };
 }
@@ -166,4 +167,26 @@ module.exports = function (test, egal) {
   suppression.clic('suppr', 'absent');
   egal('Identifiant absent : aucune confirmation', suppression.confirmations.length, 2);
   egal('Identifiant absent : aucune sauvegarde supplémentaire', suppression.ecritures(), 1);
+
+  function apercu(valeurs) {
+    var profil = demarrer();
+    profil.app.aller('profil');
+    Object.keys(valeurs).forEach(function (id) { profil.element(id).value = valeurs[id]; });
+    profil.saisir('inp-taille');
+    return profil.element('calc-apercu').innerHTML;
+  }
+  var base = { 'inp-sexe': 'h', 'inp-age': '35', 'inp-poids': '75', 'inp-activite': 'modere', 'inp-objectif': 'perdre', 'inp-manuel': '' };
+  var metres = apercu(Object.assign({}, base, { 'inp-taille': '1,75' }));
+  test('Aperçu taille 1,75 : aucun IMC', !metres.includes('IMC'));
+  test('Aperçu taille 1,75 : aucun objectif conseillé', !metres.includes('Objectif conseillé') && !metres.includes('kcal'));
+  test('Aperçu taille 1,75 : message de correction', metres.includes('Taille : entre 100 et 230 cm.'));
+  test('Aperçu taille 1,75 : suggestion en cm', metres.includes('en cm, ex. 175'));
+  var aberrant = apercu(Object.assign({}, base, { 'inp-taille': '175', 'inp-age': '5' }));
+  test('Aperçu âge hors bornes : message, sans chiffres', aberrant.includes('Âge : un nombre entre 10 et 110.') && !aberrant.includes('IMC'));
+  test('Aperçu taille hors bornes hors 1–2,5 : pas de suggestion cm', !apercu(Object.assign({}, base, { 'inp-taille': '50' })).includes('en cm'));
+  egal('Aperçu profil valide (35 ans, 175 cm, 75 kg) : identique à avant',
+    apercu(Object.assign({}, base, { 'inp-taille': '175' })),
+    '<div class="ligne-calc"><span>Métabolisme de base</span><b>1\u202f674 kcal</b></div><div class="ligne-calc"><span>Avec ton activité</span><b>2\u202f595 kcal</b></div><div class="ligne-calc fort"><span>Objectif conseillé</span><b>2\u202f095 kcal</b></div><div class="ligne-calc"><span>IMC</span><b>24,5 — Corpulence normale</b></div>');
+  egal('Aperçu profil incomplet : invitation inchangée', apercu(Object.assign({}, base, { 'inp-taille': '' })),
+    '<p class="note">Renseigne âge, taille et poids pour voir ton objectif calculé.</p>');
 };
