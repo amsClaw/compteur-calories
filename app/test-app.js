@@ -43,6 +43,8 @@ function demarrer(etatInitial) {
   var confirmations = [];
   var confirmer = false;
   var ecritures = 0;
+  var refuser = false;
+  var toasts = [];
   var window = Object.assign(cibleEvenements(), { scrollTo: function () {} });
   window.confirm = function (message) { confirmations.push(message); return confirmer; };
   var contexte = vm.createContext({
@@ -50,6 +52,7 @@ function demarrer(etatInitial) {
     localStorage: {
       getItem: function (cle) { return stockage[cle] || null; },
       setItem: function (cle, valeur) {
+        if (refuser) { var err = new Error('quota'); err.name = 'QuotaExceededError'; throw err; }
         stockage[cle] = valeur;
         if (cle === 'mes-calories-v1') ecritures++;
       },
@@ -63,7 +66,17 @@ function demarrer(etatInitial) {
   window.Logique = contexte.Logique;
   window.BaseAliments = contexte.BaseAliments;
   vm.runInContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), contexte);
+  var toastEl = element('toast');
+  var texteToast = toastEl.textContent;
+  Object.defineProperty(toastEl, 'textContent', {
+    get: function () { return texteToast; },
+    set: function (v) { texteToast = v; toasts.push(v); }
+  });
   return {
+    refuserEcriture: function (v) { refuser = v; },
+    contexte: contexte,
+    changer: function (id, fichiers) { document.emettre('change', { target: { id: id, files: fichiers } }); },
+    toasts: toasts,
     app: window.App, element: element,
     confirmations: confirmations,
     confirmer: function (valeur) { confirmer = valeur; },
@@ -173,6 +186,77 @@ module.exports = function (test, egal) {
   suppression.clic('suppr', 'absent');
   egal('Identifiant absent : aucune confirmation', suppression.confirmations.length, 2);
   egal('Identifiant absent : aucune sauvegarde supplémentaire', suppression.ecritures(), 1);
+
+  /* Stockage qui refuse l'écriture : aucun succès annoncé, l'échec reste le dernier message. */
+  function echecVisible(nom, ui) {
+    test(nom + ' : un message d\'échec affiché', ui.toasts.length > 0);
+    test(nom + ' : dernier message = échec', /Pas enregistré/.test(ui.toasts[ui.toasts.length - 1] || ''));
+    test(nom + ' : toast visible', !ui.element('toast').hidden);
+  }
+
+  var plein = demarrer();
+  plein.date(4, 12);
+  plein.refuserEcriture(true);
+  plein.app.ouvrirFeuille();
+  plein.clic('libre');
+  plein.element('inp-libre-nom').value = 'Pain';
+  plein.element('inp-libre-100g').value = '250';
+  plein.element('memoriser').checked = true;
+  plein.element('inp-libre-g').value = '60';
+  plein.clic('valider-libre');
+  test('Stockage plein, ajout : jamais « Ajouté »', plein.toasts.every(function (t) { return t.indexOf('Ajouté') === -1; }));
+  echecVisible('Stockage plein, ajout', plein);
+  egal('Stockage plein, ajout : entrée retirée de l\'état', plein.app.etat.entrees.length, 1);
+  egal('Stockage plein, ajout : aliment perso retiré', plein.app.etat.perso.length, 0);
+  test('Stockage plein, ajout : feuille restée ouverte', plein.app.feuille.ouvert);
+  plein.app.ouvrirFeuille();
+  plein.clic('choisir');
+  plein.element('inp-grammes').value = '100';
+  plein.toasts.length = 0;
+  plein.clic('valider-quantite');
+  test('Stockage plein, ajout liste : jamais « Ajouté »', plein.toasts.every(function (t) { return t.indexOf('Ajouté') === -1; }));
+  echecVisible('Stockage plein, ajout liste', plein);
+  egal('Stockage plein, ajout liste : entrée retirée', plein.app.etat.entrees.length, 1);
+
+  var profil = demarrer();
+  profil.refuserEcriture(true);
+  profil.app.aller('profil');
+  profil.element('inp-sexe').value = 'h';
+  profil.element('inp-activite').value = 'modere';
+  profil.element('inp-objectif').value = 'perdre';
+  profil.element('inp-manuel').value = '1800';
+  profil.clic('enregistrer-profil');
+  test('Stockage plein, profil : jamais « enregistré ✓ »', profil.toasts.every(function (t) { return t.indexOf('enregistré ✓') === -1; }));
+  echecVisible('Stockage plein, profil', profil);
+
+  var suppr = demarrer();
+  suppr.refuserEcriture(true);
+  suppr.confirmer(true);
+  suppr.clic('suppr', 'veille');
+  test('Stockage plein, suppression : jamais « Supprimé »', suppr.toasts.indexOf('Supprimé') === -1);
+  echecVisible('Stockage plein, suppression', suppr);
+
+  var imp = demarrer();
+  imp.refuserEcriture(true);
+  var fichier = { name: 'x.json' };
+  var lecteur = null;
+  imp.contexte.FileReader = function () { lecteur = this; this.readAsText = function () {}; };
+  imp.changer('fichier-import', [fichier]);
+  lecteur.result = JSON.stringify({ entrees: [{ id: 'i1', date: '2026-10-01', repas: 'diner', nom: 'Riz', grammes: 100, kcal: 130 }] });
+  lecteur.onload();
+  test('Stockage plein, import : jamais « importés ✓ »', imp.toasts.every(function (t) { return t.indexOf('importés') === -1; }));
+  echecVisible('Stockage plein, import', imp);
+
+  var ok = demarrer();
+  ok.app.aller('profil');
+  ok.element('inp-manuel').value = '1800';
+  ok.clic('enregistrer-profil');
+  test('Stockage OK, profil : succès annoncé', /^Objectif manuel enregistré ✓ Objectif : 1.800 kcal$/.test(ok.toasts[ok.toasts.length - 1]));
+  ok.contexte.FileReader = function () { lecteur = this; this.readAsText = function () {}; };
+  ok.changer('fichier-import', [fichier]);
+  lecteur.result = JSON.stringify({ entrees: [] });
+  lecteur.onload();
+  egal('Stockage OK, import : succès annoncé', ok.toasts[ok.toasts.length - 1], '0 repas importés ✓');
 
   function apercu(valeurs) {
     var profil = demarrer();
