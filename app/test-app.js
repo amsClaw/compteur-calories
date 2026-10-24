@@ -4,7 +4,7 @@ var fs = require('node:fs');
 var path = require('node:path');
 var vm = require('node:vm');
 
-function demarrer() {
+function demarrer(etatInitial) {
   var maintenant = new Date(2026, 9, 3, 23, 55).getTime();
   class DateSimulee extends Date {
     constructor(...args) { super(...(args.length ? args : [maintenant])); }
@@ -36,9 +36,10 @@ function demarrer() {
     getElementById: element,
     querySelectorAll: function () { return []; }
   });
-  var stockage = { 'mes-calories-v1': JSON.stringify({
+  if (etatInitial === undefined) etatInitial = {
     entrees: [{ id: 'veille', date: '2026-10-03', repas: 'diner', nom: 'Riz', grammes: 100, kcal: 130 }]
-  }) };
+  };
+  var stockage = etatInitial === null ? {} : { 'mes-calories-v1': JSON.stringify(etatInitial) };
   var confirmations = [];
   var confirmer = false;
   var ecritures = 0;
@@ -94,11 +95,17 @@ function demarrer() {
       };
       document.emettre('click', { target: cible });
     },
+    saisir: function (id) { document.emettre('input', { target: { id: id } }); },
     sauvegarde: function () { return JSON.parse(stockage['mes-calories-v1']); }
   };
 }
 
 module.exports = function (test, egal) {
+  var manuelSeul = demarrer({ profil: null, entrees: [], objectifManuel: 1800 });
+  egal('Démarrage avec objectif manuel seul : écran jour', manuelSeul.app.ecran(), 'jour');
+  egal('Démarrage avec objectif manuel seul : objectif conservé', manuelSeul.app.objectifDuJour(), 1800);
+  egal('Démarrage avec stockage vide : écran profil', demarrer(null).app.ecran(), 'profil');
+
   ['visibilitychange', 'focus'].forEach(function (type) {
     var ui = demarrer();
     ui.date(4);
@@ -250,4 +257,26 @@ module.exports = function (test, egal) {
   lecteur.result = JSON.stringify({ entrees: [] });
   lecteur.onload();
   egal('Stockage OK, import : succès annoncé', ok.toasts[ok.toasts.length - 1], '0 repas importés ✓');
+
+  function apercu(valeurs) {
+    var profil = demarrer();
+    profil.app.aller('profil');
+    Object.keys(valeurs).forEach(function (id) { profil.element(id).value = valeurs[id]; });
+    profil.saisir('inp-taille');
+    return profil.element('calc-apercu').innerHTML;
+  }
+  var base = { 'inp-sexe': 'h', 'inp-age': '35', 'inp-poids': '75', 'inp-activite': 'modere', 'inp-objectif': 'perdre', 'inp-manuel': '' };
+  var metres = apercu(Object.assign({}, base, { 'inp-taille': '1,75' }));
+  test('Aperçu taille 1,75 : aucun IMC', !metres.includes('IMC'));
+  test('Aperçu taille 1,75 : aucun objectif conseillé', !metres.includes('Objectif conseillé') && !metres.includes('kcal'));
+  test('Aperçu taille 1,75 : message de correction', metres.includes('Taille : entre 100 et 230 cm.'));
+  test('Aperçu taille 1,75 : suggestion en cm', metres.includes('en cm, ex. 175'));
+  var aberrant = apercu(Object.assign({}, base, { 'inp-taille': '175', 'inp-age': '5' }));
+  test('Aperçu âge hors bornes : message, sans chiffres', aberrant.includes('Âge : un nombre entre 10 et 110.') && !aberrant.includes('IMC'));
+  test('Aperçu taille hors bornes hors 1–2,5 : pas de suggestion cm', !apercu(Object.assign({}, base, { 'inp-taille': '50' })).includes('en cm'));
+  egal('Aperçu profil valide (35 ans, 175 cm, 75 kg) : identique à avant',
+    apercu(Object.assign({}, base, { 'inp-taille': '175' })),
+    '<div class="ligne-calc"><span>Métabolisme de base</span><b>1\u202f674 kcal</b></div><div class="ligne-calc"><span>Avec ton activité</span><b>2\u202f595 kcal</b></div><div class="ligne-calc fort"><span>Objectif conseillé</span><b>2\u202f095 kcal</b></div><div class="ligne-calc"><span>IMC</span><b>24,5 — Corpulence normale</b></div>');
+  egal('Aperçu profil incomplet : invitation inchangée', apercu(Object.assign({}, base, { 'inp-taille': '' })),
+    '<p class="note">Renseigne âge, taille et poids pour voir ton objectif calculé.</p>');
 };
