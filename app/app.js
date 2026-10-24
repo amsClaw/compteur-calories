@@ -293,7 +293,18 @@
     var p = lireProfilFormulaire();
     var manuel = L.valeurNumerique(document.getElementById('inp-manuel').value);
     var html = '';
-    if (p.age && p.tailleCm && p.poidsKg) {
+    var v = L.validerProfil(p);
+    var rempli = ['inp-age', 'inp-taille', 'inp-poids'].every(function (id) {
+      return String(document.getElementById(id).value || '').trim() !== '';
+    });
+    if (rempli && !v.ok) {
+      // Profil saisi invalide : pas de chiffres absurdes, seulement les corrections à faire.
+      html += '<div class="erreurs">' + v.erreurs.map(function (m) {
+        if (m.indexOf('Taille') === 0 && p.tailleCm >= 1 && p.tailleCm <= 2.5) m += ' Indique-la en cm, ex. 175.';
+        return L.echapper(m);
+      }).join('<br>') + '</div>';
+      if (manuel) html += '<p class="note" style="margin-top:8px">Objectif manuel actif : <b>' + n(manuel) + ' kcal</b>.</p>';
+    } else if (v.ok) {
       var bmr = L.calculerBMR(p);
       var tdee = L.calculerTDEE(bmr, p.activite);
       var obj = L.calculerObjectif(tdee, p.objectif);
