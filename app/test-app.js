@@ -4,7 +4,7 @@ var fs = require('node:fs');
 var path = require('node:path');
 var vm = require('node:vm');
 
-function demarrer() {
+function demarrer(etatInitial) {
   var maintenant = new Date(2026, 9, 3, 23, 55).getTime();
   class DateSimulee extends Date {
     constructor(...args) { super(...(args.length ? args : [maintenant])); }
@@ -36,9 +36,10 @@ function demarrer() {
     getElementById: element,
     querySelectorAll: function () { return []; }
   });
-  var stockage = { 'mes-calories-v1': JSON.stringify({
+  if (etatInitial === undefined) etatInitial = {
     entrees: [{ id: 'veille', date: '2026-10-03', repas: 'diner', nom: 'Riz', grammes: 100, kcal: 130 }]
-  }) };
+  };
+  var stockage = etatInitial === null ? {} : { 'mes-calories-v1': JSON.stringify(etatInitial) };
   var confirmations = [];
   var confirmer = false;
   var ecritures = 0;
@@ -87,6 +88,11 @@ function demarrer() {
 }
 
 module.exports = function (test, egal) {
+  var manuelSeul = demarrer({ profil: null, entrees: [], objectifManuel: 1800 });
+  egal('Démarrage avec objectif manuel seul : écran jour', manuelSeul.app.ecran(), 'jour');
+  egal('Démarrage avec objectif manuel seul : objectif conservé', manuelSeul.app.objectifDuJour(), 1800);
+  egal('Démarrage avec stockage vide : écran profil', demarrer(null).app.ecran(), 'profil');
+
   ['visibilitychange', 'focus'].forEach(function (type) {
     var ui = demarrer();
     ui.date(4);

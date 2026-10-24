@@ -629,7 +629,7 @@
   }
 
   rendre();
-  if (!etat.profil && !etat.entrees.length) {
+  if (!etat.profil && !etat.entrees.length && !etat.objectifManuel) {
     ecran = 'profil';
     rendre();
   }
